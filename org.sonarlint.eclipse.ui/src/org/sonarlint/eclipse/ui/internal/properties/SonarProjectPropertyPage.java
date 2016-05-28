@@ -144,7 +144,7 @@ public class SonarProjectPropertyPage extends PropertyPage {
       return "";
     }
     IServer server = ServersManager.getInstance().getServer(serverId);
-    return server != null ? server.getName() : ("Unknown server: '" + serverId + "'");
+    return server != null ? server.getId() : ("Unknown server: '" + serverId + "'");
   }
 
   @Override
@@ -157,7 +157,7 @@ public class SonarProjectPropertyPage extends PropertyPage {
   public boolean performOk() {
     final SonarLintProject sonarProject = SonarLintProject.getInstance(getProject());
     sonarProject.setAutoEnabled(enabledBtn.getSelection());
-    sonarProject.setBuilderEnabled(enabledBtn.getSelection());
+    sonarProject.setBuilderEnabled(enabledBtn.getSelection(), null);
     sonarProject.save();
     return super.performOk();
   }

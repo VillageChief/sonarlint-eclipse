@@ -6,14 +6,14 @@
   <parent>
     <groupId>org.sonarsource.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>31</version>
+    <version>32</version>
     <relativePath />
   </parent>
 
   <groupId>org.sonarsource.sonarlint.eclipse</groupId>
   <artifactId>sonarlint-eclipse-parent</artifactId>
   <packaging>pom</packaging>
-  <version>2.0.2.20160509-CODESCAN-RELEASE</version>
+  <version>2.1.0.20160524-CODESCAN-RELEASE</version>
 
   <name>SonarLint for Eclipse (parent)</name>
   <description></description>
@@ -97,12 +97,12 @@
     <dependency>
       <groupId>org.sonarsource.sonarlint.core</groupId>
       <artifactId>sonarlint-core</artifactId>
-      <version>2.1-CODESCAN</version>
+      <version>2.3-CODESCAN</version>
     </dependency>
     <dependency>
       <groupId>org.sonarsource.sonarlint.core</groupId>
       <artifactId>sonarlint-client-api</artifactId>
-      <version>2.1-CODESCAN</version>
+      <version>2.3-CODESCAN</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

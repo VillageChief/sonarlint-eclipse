@@ -74,6 +74,7 @@ import org.eclipse.ui.forms.widgets.Form;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.part.PageBook;
 import org.sonarlint.eclipse.core.internal.jobs.ProjectUpdateJob;
+import org.sonarlint.eclipse.core.internal.markers.MarkerUtils;
 import org.sonarlint.eclipse.core.internal.resources.SonarLintProject;
 import org.sonarlint.eclipse.core.internal.server.IServer;
 import org.sonarlint.eclipse.core.internal.server.IServerLifecycleListener;
@@ -108,6 +109,9 @@ public class BindProjectsPage extends WizardPage {
       "SonarQube is an Open Source platform to manage code quality. "
         + "Bind your Eclipse projects to some SonarQube projects in order to get the same issues in Eclipse and in SonarQube.");
     this.projects = projects;
+    if (!projects.isEmpty()) {
+      selectedServer = ServersManager.getInstance().getServer(SonarLintProject.getInstance(projects.get(0)).getServerId());
+    }
   }
 
   @Override
@@ -270,7 +274,7 @@ public class BindProjectsPage extends WizardPage {
       @Override
       public String getText(Object element) {
         IServer current = (IServer) element;
-        return current.getName();
+        return current.getId();
       }
     });
 
@@ -384,7 +388,10 @@ public class BindProjectsPage extends WizardPage {
     } else {
       book.showPage(serverDropDownPage);
       serverCombo.setInput(servers.toArray());
-      serverCombo.setSelection(new StructuredSelection(servers.contains(selectedServer) ? selectedServer : servers.get(0)));
+      if (!servers.contains(selectedServer)) {
+        selectedServer = servers.get(0);
+      }
+      serverCombo.setSelection(new StructuredSelection(selectedServer));
     }
   }
 
@@ -485,6 +492,7 @@ public class BindProjectsPage extends WizardPage {
     }
     if (changed) {
       sonarProject.save();
+      MarkerUtils.deleteIssuesMarkers(project);
       if (sonarProject.isBound()) {
         new ProjectUpdateJob(sonarProject).schedule();
       }
