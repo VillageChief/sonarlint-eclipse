@@ -6,13 +6,13 @@
   <parent>
     <groupId>org.sonarsource.sonarlint.eclipse</groupId>
     <artifactId>sonarlint-eclipse-parent</artifactId>
-    <version>2.5.1-SNAPSHOT</version>
+    <version>2.5.1000</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>target-platform-e47</artifactId>
   <packaging>eclipse-target-definition</packaging>
 
-  <name>SonarLint for Eclipse (target-platform for Oxygen)</name>
+  <name>CodeScan for Eclipse (target-platform for Oxygen)</name>
 
 </project>

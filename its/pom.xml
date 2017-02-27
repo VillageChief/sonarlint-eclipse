@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.sonarsource.sonarlint.eclipse</groupId>
     <artifactId>sonarlint-eclipse-parent</artifactId>
-    <version>2.5.1-SNAPSHOT</version>
+    <version>2.5.1000</version>
   </parent>
 
   <artifactId>sonarlint-eclipse-its</artifactId>
@@ -26,7 +26,7 @@
 
 
   <properties>
-    <license.title>SonarLint for Eclipse</license.title>
+    <license.title>CodeScan for Eclipse</license.title>
     <license.year>2015</license.year>
     <license.mailto>sonarlint@sonarsource.com</license.mailto>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -1,5 +1,5 @@
 /*
- * SonarLint for Eclipse
+ * CodeScan for Eclipse
  * Copyright (C) 2015-2016 SonarSource SA
  * sonarlint@sonarsource.com
  *

@@ -1,5 +1,5 @@
 /*
- * SonarLint for Eclipse
+ * CodeScan for Eclipse
  * Copyright (C) 2015-2016 SonarSource SA
  * sonarlint@sonarsource.com
  *
@@ -110,7 +110,7 @@ public class SonarLintUiPlugin extends AbstractUIPlugin {
 
     getPreferenceStore().addPropertyChangeListener(prefListener);
 
-    SonarLintCorePlugin.getDefault().info("Starting SonarLint for Eclipse " + getBundle().getVersion());
+    SonarLintCorePlugin.getDefault().info("Starting CodeScan for Eclipse " + getBundle().getVersion());
 
     checkServersStatus();
 

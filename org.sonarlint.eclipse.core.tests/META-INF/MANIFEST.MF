@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: SonarLint for Eclipse Tests
+Bundle-Name: CodeScan for Eclipse Tests
 Bundle-SymbolicName: org.sonarlint.eclipse.core.tests;singleton:=true
 Bundle-Version: 2.5.1.qualifier
 Bundle-Vendor: SonarSource
