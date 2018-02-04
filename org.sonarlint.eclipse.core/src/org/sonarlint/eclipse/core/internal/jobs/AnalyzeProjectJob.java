@@ -135,7 +135,7 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
           server = (Server) SonarLintCorePlugin.getServersManager().getServer(getProjectConfig().getServerId());
           if (server == null) {
             return new Status(IStatus.ERROR, SonarLintCorePlugin.PLUGIN_ID,
-              "Project '" + getProject().getName() + "' is bound to an unknown SonarQube server: '" + getProjectConfig().getServerId()
+              "Project '" + getProject().getName() + "' is bound to an unknown CodeScan server: '" + getProjectConfig().getServerId()
                 + "'. Please fix project binding or unbind project.");
           }
         }

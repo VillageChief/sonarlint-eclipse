@@ -53,7 +53,7 @@ public class ServerStorageNeedUpdatePopup extends AbstractNotificationPopup {
     Label messageLabel = new Label(composite, SWT.WRAP);
     messageLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-    messageLabel.setText("Configuration stored from SonarQube server '" + server.getId() + "' is missing or outdated.");
+    messageLabel.setText("Configuration stored from CodeScan server '" + server.getId() + "' is missing or outdated.");
     messageLabel.setBackground(composite.getBackground());
     Link updateServerLink = new Link(composite, SWT.NONE);
     updateServerLink.setText("<a>Update all project bindings from '" + server.getId() + "'</a>");

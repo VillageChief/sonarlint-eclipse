@@ -34,7 +34,7 @@ import org.sonarsource.sonarlint.core.client.api.connected.RemoteModule;
 import org.sonarsource.sonarlint.core.client.api.util.TextSearchIndex;
 
 /**
- * This provider will search for projects on all configured SonarQube servers
+ * This provider will search for projects on all configured CodeScan servers
  * then return a list of proposals. Because a proposal can only be a String
  * we will serialize {@link RemoteSonarProject} using {@link RemoteSonarProject#asString()}
  *

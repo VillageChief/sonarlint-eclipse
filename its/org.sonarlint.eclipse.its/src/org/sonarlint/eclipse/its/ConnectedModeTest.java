@@ -70,7 +70,7 @@ public class ConnectedModeTest extends AbstractSonarLintTest {
 
     wizardBot.assertTitle("Connect to a SonarQube Server");
 
-    wizardBot.selectSonarQube();
+    wizardBot.selectCodeScan();
     wizardBot.clickNext();
 
     assertThat(wizardBot.isNextEnabled()).isFalse();

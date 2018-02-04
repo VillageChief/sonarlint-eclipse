@@ -45,7 +45,7 @@ public interface ISonarLintProject extends ISonarLintIssuable {
   }
 
   /**
-   * Is this project already bound to a remote SonarQube project/module?
+   * Is this project already bound to a remote CodeScan project/module?
    */
   default boolean isBound() {
     return SonarLintProjectConfiguration.read(getScopeContext()).isBound();

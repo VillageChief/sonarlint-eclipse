@@ -52,7 +52,7 @@ public class ServerUpdateAvailablePopup extends AbstractNotificationPopup {
     GridData layoutData = new GridData(GridData.FILL_HORIZONTAL);
     messageLabel.setLayoutData(layoutData);
 
-    messageLabel.setText("Updates are available on SonarQube server '" + server.getId() + "'.\nDo you want to download and update them now?");
+    messageLabel.setText("Updates are available on CodeScan server '" + server.getId() + "'.\nDo you want to download and update them now?");
     messageLabel.setBackground(composite.getBackground());
     Composite links = new Composite(composite, SWT.NONE);
     links.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));

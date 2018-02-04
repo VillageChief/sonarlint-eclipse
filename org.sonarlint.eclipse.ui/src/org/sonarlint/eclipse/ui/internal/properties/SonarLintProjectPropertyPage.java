@@ -124,14 +124,14 @@ public class SonarLintProjectPropertyPage extends PropertyPage {
     String moduleKey = projectConfig.getModuleKey();
     final String serverId = projectConfig.getServerId();
     if (moduleKey == null && serverId == null) {
-      bindLink.setText("<a>Bind this Eclipse project to a SonarQube project</a>");
+      bindLink.setText("<a>Bind this Eclipse project to a CodeScan project</a>");
       boundDetails.setText("");
     } else {
       boundDetails.setText("Bound to the project '" + moduleKey + "' on server '" + serverName(serverId) + "'");
       bindLink.setText("<a>Update project binding</a>");
     }
     if (serverId != null && SonarLintCorePlugin.getServersManager().getServer(serverId) == null) {
-      addServerLink.setText("<a>Connect to SonarQube server '" + serverId + "'</a>");
+      addServerLink.setText("<a>Connect to CodeScan server '" + serverId + "'</a>");
       addServerLink.setVisible(true);
     } else {
       addServerLink.setVisible(false);

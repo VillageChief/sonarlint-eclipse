@@ -34,7 +34,7 @@ public class BindProjectsWizard extends Wizard {
   public BindProjectsWizard(List<ISonarLintProject> projects) {
     this.projects = projects;
     setNeedsProgressMonitor(true);
-    setWindowTitle("Bind Eclipse projects to SonarQube projects");
+    setWindowTitle("Bind Eclipse projects to CodeScan projects");
     setHelpAvailable(false);
   }
 

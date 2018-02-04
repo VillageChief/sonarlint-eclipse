@@ -32,7 +32,7 @@ import org.sonarlint.eclipse.ui.internal.popup.ServerUpdateAvailablePopup;
 public class CheckForUpdatesJob extends Job {
 
   public CheckForUpdatesJob() {
-    super("Check for configuration updates on SonarQube servers");
+    super("Check for configuration updates on CodeScan servers");
     setPriority(DECORATE);
   }
 
@@ -40,7 +40,7 @@ public class CheckForUpdatesJob extends Job {
   protected IStatus run(IProgressMonitor monitor) {
     try {
       SubMonitor subMonitor = SubMonitor.convert(monitor, SonarLintCorePlugin.getServersManager().getServers().size());
-      subMonitor.setTaskName("Checking for configuration updates on SonarQube servers");
+      subMonitor.setTaskName("Checking for configuration updates on CodeScan servers");
       for (final IServer server : SonarLintCorePlugin.getServersManager().getServers()) {
         subMonitor.subTask("Checking for updates from server '" + server.getId() + "'");
         SubMonitor serverMonitor = subMonitor.newChild(1);

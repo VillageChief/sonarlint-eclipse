@@ -78,7 +78,7 @@ public class SonarQubeNotificationPopup extends AbstractNotificationPopup {
 
   @Override
   protected String getPopupShellTitle() {
-    return "SonarQube event";
+    return "CodeScan event";
   }
 
   @Override

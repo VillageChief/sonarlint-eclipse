@@ -37,7 +37,7 @@ public interface ISonarLintFile extends ISonarLintIssuable {
   IDocument getDocument();
 
   /**
-   * Path of the file inside its project. Should use same separator than SonarQube keys ('/').
+   * Path of the file inside its project. Should use same separator than CodeScan keys ('/').
    * Used by issue tracking.
    */
   String getProjectRelativePath();

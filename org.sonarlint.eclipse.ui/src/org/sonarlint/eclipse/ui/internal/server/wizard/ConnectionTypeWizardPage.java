@@ -42,7 +42,7 @@ import org.sonarlint.eclipse.core.internal.server.Server;
 import org.sonarlint.eclipse.ui.internal.SonarLintImages;
 
 /**
- * Choose between SonarCloud and SonarQube on premise
+ * Choose between SonarCloud and CodeScan on premise
  */
 public class ConnectionTypeWizardPage extends WizardPage {
 

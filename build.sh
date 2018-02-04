@@ -18,7 +18,7 @@ export PROJECT_VERSION=$NEW_VERSION
 if [ "${GITHUB_BRANCH}" == "master" ] && [ "$IS_PULLREQUEST" == "false" ]; then
   echo '======= Build, deploy and analyze master'
 
-  # Fetch all commit history so that SonarQube has exact blame information
+  # Fetch all commit history so that CodeScan has exact blame information
   # for issue auto-assignment
   # This command can fail with "fatal: --unshallow on a complete repository does not make sense" 
   # if there are not enough commits in the Git repository (even if Travis executed git clone --depth 50).

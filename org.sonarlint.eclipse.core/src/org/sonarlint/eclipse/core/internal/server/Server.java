@@ -77,7 +77,7 @@ import org.sonarsource.sonarlint.core.notifications.SonarQubeNotifications;
 
 public class Server implements IServer, StateListener {
 
-  public static final String SONARCLOUD_URL = "https://sonarcloud.io";
+  public static final String SONARCLOUD_URL = "https://app.codescan.io";
   public static final String OLD_SONARCLOUD_URL = "https://sonarqube.com";
 
   private static final String NEED_UPDATE = "Need data update";
@@ -308,7 +308,7 @@ public class Server implements IServer, StateListener {
   }
 
   private static String buildMinimumVersionFailMessage(Collection<SonarAnalyzer> failingAnalyzers) {
-    return "The following plugins do not meet the required minimum versions, please upgrade them on your SonarQube server:\n  " +
+    return "The following plugins do not meet the required minimum versions, please upgrade them on your CodeScan server:\n  " +
       failingAnalyzers.stream()
         .map(p -> p.key() + " (installed: " + p.version() + ", minimum: " + p.minimumVersion() + ")")
         .collect(Collectors.joining("\n  "));

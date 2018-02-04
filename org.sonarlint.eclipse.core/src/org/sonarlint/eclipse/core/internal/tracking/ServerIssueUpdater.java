@@ -128,10 +128,10 @@ public class ServerIssueUpdater {
   }
 
   /**
-   * Convert relative path to SonarQube file key
+   * Convert relative path to CodeScan file key
    *
    * @param relativePath relative path string in the local OS
-   * @return SonarQube file key
+   * @return CodeScan file key
    */
   public static String toFileKey(IResource resource) {
     String relativePath = resource.getProjectRelativePath().toString();

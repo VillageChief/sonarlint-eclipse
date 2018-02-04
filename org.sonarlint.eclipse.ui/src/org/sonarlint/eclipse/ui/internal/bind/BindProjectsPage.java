@@ -99,10 +99,10 @@ public class BindProjectsPage extends WizardPage {
   private Link updateServerLink;
 
   public BindProjectsPage(List<ISonarLintProject> projects) {
-    super("bindProjects", "Bind Eclipse projects to SonarQube projects", SonarLintImages.SONARWIZBAN_IMG);
+    super("bindProjects", "Bind Eclipse projects to CodeScan projects", SonarLintImages.SONARWIZBAN_IMG);
     setDescription(
-      "SonarQube is an Open Source platform to manage code quality. "
-        + "Bind your Eclipse projects to some SonarQube projects in order to get the same issues in Eclipse and in SonarQube.");
+      "CodeScan is an Open Source platform to manage code quality. "
+        + "Bind your Eclipse projects to some CodeScan projects in order to get the same issues in Eclipse and in CodeScan.");
     this.projects = projects;
     if (!projects.isEmpty()) {
       selectedServer = SonarLintCorePlugin.getServersManager().getServer(SonarLintProjectConfiguration.read(projects.get(0).getScopeContext()).getServerId());
@@ -145,7 +145,7 @@ public class BindProjectsPage extends WizardPage {
     columnProject.getColumn().setWidth(200);
 
     TableViewerColumn columnSonarProject = new TableViewerColumn(viewer, SWT.LEFT);
-    columnSonarProject.getColumn().setText("SonarQube Project");
+    columnSonarProject.getColumn().setText("CodeScan Project");
     columnSonarProject.getColumn().setWidth(600);
 
     columnSonarProject.setEditingSupport(new ProjectAssociationModelEditingSupport(viewer));
@@ -248,7 +248,7 @@ public class BindProjectsPage extends WizardPage {
     serverDropDownPage.setLayout(layout);
 
     Label labelField = new Label(serverDropDownPage, SWT.NONE);
-    labelField.setText("Select a SonarQube server: ");
+    labelField.setText("Select a CodeScan server: ");
     serverCombo = new ComboViewer(serverDropDownPage, SWT.READ_ONLY);
 
     serverCombo.setContentProvider(ArrayContentProvider.getInstance());

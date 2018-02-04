@@ -89,7 +89,7 @@ public class ConnectedModeWithOrgaTest extends AbstractSonarLintTest {
 
     wizardBot.assertTitle("Connect to a SonarQube Server");
 
-    wizardBot.selectSonarQube();
+    wizardBot.selectCodeScan();
     wizardBot.clickNext();
 
     wizardBot.setServerUrl(orchestrator.getServer().getUrl());

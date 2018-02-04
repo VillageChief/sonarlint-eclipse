@@ -46,7 +46,7 @@
 	      class="org.sonarlint.eclipse.ui.internal.server.wizard.ServerConnectionWizard"
 	      category="org.sonarlint.eclipse"
 	      icon="icons/logo/sonarqube-16px.png">
-	    <description>Connect to a new SonarQube server</description>
+	    <description>Connect to a new CodeScan server</description>
 	  </wizard>
 	</extension>
 	
@@ -587,9 +587,9 @@
           categoryId="org.sonarlint.eclipse.ui.command.category">
     </command>
     <command
-          description="Bind to a SonarQube project"
+          description="Bind to a CodeScan project"
           id="org.sonarlint.eclipse.ui.internal.command.BindProjectsCommand"
-          name="Bind to a SonarQube project..."
+          name="Bind to a CodeScan project..."
           categoryId="org.sonarlint.eclipse.ui.command.category">
     </command>
     <command

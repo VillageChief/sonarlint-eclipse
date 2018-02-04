@@ -26,7 +26,7 @@ import org.sonarlint.eclipse.core.internal.utils.StringUtils;
 import org.sonarlint.eclipse.core.resource.ISonarLintProject;
 
 /**
- * This class represents the association between an Eclipse and a SonarQube project/module.
+ * This class represents the association between an Eclipse and a CodeScan project/module.
  *
  */
 public class ProjectBindModel extends AbstractModelObject {
@@ -60,9 +60,9 @@ public class ProjectBindModel extends AbstractModelObject {
   public String getDisplayName() {
     if (StringUtils.isBlank(moduleKey)) {
       if (autoBindFailed) {
-        return "<Auto-bind failed. Type here to start searching for a remote SonarQube project...>";
+        return "<Auto-bind failed. Type here to start searching for a remote CodeScan project...>";
       }
-      return "<Type here to start searching for a remote SonarQube project...>";
+      return "<Type here to start searching for a remote CodeScan project...>";
     } else if (server == null) {
       return "<Bound to an unknown server: '" + this.serverId + "'>";
     } else {

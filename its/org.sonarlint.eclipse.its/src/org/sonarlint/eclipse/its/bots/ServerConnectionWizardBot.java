@@ -85,7 +85,7 @@ public class ServerConnectionWizardBot {
     }
   }
 
-  public void selectSonarQube() {
+  public void selectCodeScan() {
     wizardBot.radio(1).click();
   }
 

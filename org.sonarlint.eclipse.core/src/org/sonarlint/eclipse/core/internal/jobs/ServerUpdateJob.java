@@ -38,7 +38,7 @@ public class ServerUpdateJob extends Job {
   private final IServer server;
 
   public ServerUpdateJob(IServer server) {
-    super("Update data from SonarQube server '" + server.getId() + "'");
+    super("Update data from CodeScan server '" + server.getId() + "'");
     this.server = server;
   }
 
