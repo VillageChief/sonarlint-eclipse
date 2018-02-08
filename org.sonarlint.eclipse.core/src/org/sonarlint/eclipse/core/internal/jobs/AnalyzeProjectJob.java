@@ -129,6 +129,7 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
         mergedExtraProps.put(sonarProperty.getName(), sonarProperty.getValue());
       }
 
+
       if (!inputFiles.isEmpty()) {
         Server server = null;
         if (getProject().isBound()) {
@@ -138,6 +139,12 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
               "Project '" + getProject().getName() + "' is bound to an unknown CodeScan server: '" + getProjectConfig().getServerId()
                 + "'. Please fix project binding or unbind project.");
           }
+
+	    //pass sonar host credentials in so that we can resolve license.
+	    mergedExtraProps.put("sonar.host.url", server.getHost());
+	    mergedExtraProps.put("sonar.organization", server.getOrganization());
+	    mergedExtraProps.put("sonar.login", SonarLintCorePlugin.getServersManager().getUsername(server));
+	    mergedExtraProps.put("sonar.password", SonarLintCorePlugin.getServersManager().getPassword(server));
         }
 
         runAnalysisAndUpdateMarkers(server, filesToAnalyze, monitor, mergedExtraProps, inputFiles, analysisWorkDir);

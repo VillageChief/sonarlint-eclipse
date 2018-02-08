@@ -2,7 +2,7 @@
 <feature
       id="org.sonarlint.eclipse.feature"
       label="%feature_name"
-      version="3.3.1.CODESCAN4"
+      version="3.3.1.CODESCAN7"
       provider-name="%provider_name"
       plugin="org.sonarlint.eclipse.ui">
 
