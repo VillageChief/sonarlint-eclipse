@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@ import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
-import org.sonarlint.eclipse.core.internal.PreferencesUtils;
+import org.sonarlint.eclipse.core.internal.jobs.TestFileClassifier;
+import org.sonarlint.eclipse.core.internal.utils.PreferencesUtils;
 import org.sonarlint.eclipse.ui.internal.Messages;
 import org.sonarlint.eclipse.ui.internal.SonarLintUiPlugin;
 
@@ -56,6 +57,13 @@ public class SonarLintPreferencePage extends FieldEditorPreferencePage implement
       getFieldEditorParent()));
     addField(new StringFieldEditor(PreferencesUtils.PREF_TEST_FILE_REGEXPS,
       Messages.SonarPreferencePage_label_test_file_regexps, getFieldEditorParent()));
+  }
+
+  @Override
+  public boolean performOk() {
+    boolean result = super.performOk();
+    TestFileClassifier.get().reload();
+    return result;
   }
 
 }

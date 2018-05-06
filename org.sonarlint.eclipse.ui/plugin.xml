@@ -20,6 +20,20 @@
     </page>
     <page
           category="org.sonarlint.eclipse.ui.preferences.SonarLintPreferencePage"
+          class="org.sonarlint.eclipse.ui.internal.properties.FileExclusionsPage"
+          id="org.sonarlint.eclipse.ui.properties.FileExclusionsPage"
+          name="File Exclusions">
+          <keywordReference id="org.sonarlint.eclipse.ui.SonarLintKeyword"/>
+    </page>
+    <page
+          category="org.sonarlint.eclipse.ui.preferences.SonarLintPreferencePage"
+          class="org.sonarlint.eclipse.ui.internal.properties.RuleExclusionsPage"
+          id="org.sonarlint.eclipse.ui.properties.RuleExclusionsPage"
+          name="Rules Configuration">
+          <keywordReference id="org.sonarlint.eclipse.ui.SonarLintKeyword"/>
+    </page>
+    <page
+          category="org.sonarlint.eclipse.ui.preferences.SonarLintPreferencePage"
           class="org.sonarlint.eclipse.ui.internal.properties.AboutPropertyPage"
           id="org.sonarlint.eclipse.ui.properties.AboutPropertyPage"
           name="Miscellaneous">
@@ -394,6 +408,18 @@
           </adapt>
        </enabledWhen>
     </page>
+    
+    <page
+       category="org.sonarlint.eclipse.ui.properties.sonarProjectPropertyPage"
+       class="org.sonarlint.eclipse.ui.internal.properties.FileExclusionsPage"
+       id="org.sonarlint.eclipse.ui.properties.FileExclusionsPage"
+       name="File Exclusions">
+       <enabledWhen>
+          <adapt type="org.sonarlint.eclipse.core.resource.ISonarLintProject">
+            <test property="org.sonarlint.eclipse.core.open"/>
+          </adapt>
+       </enabledWhen>
+    </page>
   </extension>
 
   <extension point="org.eclipse.ui.menus">
@@ -442,6 +468,23 @@
          </command>
       </menuContribution>
       <menuContribution
+            locationURI="popup:org.sonarlint.eclipse.ui.views.issues.IssuesView">
+           <command
+                 commandId="org.sonarlint.eclipse.ui.internal.command.DeactivateRuleCommand"
+                 style="push"
+                 mnemonic="u">
+          <visibleWhen>
+             <with variable="activeMenuSelection">
+                <iterate ifEmpty="false">
+                    <adapt type="org.eclipse.core.resources.IMarker">
+                        <test property="org.sonarlint.eclipse.core.standalone"/>
+                    </adapt>
+                </iterate>
+             </with>
+          </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution
             locationURI="menu:org.sonarlint.eclipse.ui.views.issues.ChangeSetIssuesView">
          <menu
            id="org.eclipse.ui.ide.problems.filtersMenu"
@@ -477,6 +520,14 @@
                  mnemonic="R">
          </command>
       </menuContribution>
+      <menuContribution
+            locationURI="popup:org.sonarlint.eclipse.ui.views.issues.ChangeSetIssuesView">
+           <command
+                 commandId="org.sonarlint.eclipse.ui.internal.command.DeactivateRuleCommand"
+                 style="push"
+                 mnemonic="u">
+         </command>
+      </menuContribution>
 	<menuContribution locationURI="popup:sonar.menu?after=group1">
 	   <command
 	         commandId="org.sonarlint.eclipse.ui.internal.command.AnalyzeChangeSetCommand"
@@ -502,14 +553,28 @@
 	            <iterate ifEmpty="false">
 	            	<or>
 	            		<adapt type="org.sonarlint.eclipse.core.resource.ISonarLintProject">
-							<test property="org.sonarlint.eclipse.core.open"/>
-						</adapt>
-					    <adapt type="org.sonarlint.eclipse.core.resource.ISonarLintProjectContainer"/>
-					    <adapt type="org.sonarlint.eclipse.core.resource.ISonarLintFile"/>
-			    	</or>
+							      <test property="org.sonarlint.eclipse.core.open"/>
+						      </adapt>
+					        <adapt type="org.sonarlint.eclipse.core.resource.ISonarLintProjectContainer"/>
+					        <adapt type="org.sonarlint.eclipse.core.resource.ISonarLintFile"/>
+			    	    </or>
 	            </iterate>
 	         </with>
 	      </visibleWhen>
+	   </command>
+	   <command
+	         commandId="org.sonarlint.eclipse.ui.internal.command.ExcludeCommand"
+	         style="push">
+	     <visibleWhen>
+	       <with variable="activeMenuSelection">
+	         <iterate ifEmpty="false">
+	           <or>
+			         <adapt type="org.sonarlint.eclipse.core.resource.ISonarLintFile"/>
+			       </or>
+	         </iterate>
+	        </with>
+	     </visibleWhen>
+	     
 	   </command>
 	   <command
              commandId="org.sonarlint.eclipse.ui.internal.command.BindProjectsCommand"
@@ -575,9 +640,21 @@
           categoryId="org.sonarlint.eclipse.ui.command.category">
     </command>
     <command
+          description="Deactivate the rule of this issue"
+          id="org.sonarlint.eclipse.ui.internal.command.DeactivateRuleCommand"
+          name="Deactivate rule"
+          categoryId="org.sonarlint.eclipse.ui.command.category">
+    </command>
+    <command
           description="Analyze with SonarLint"
           id="org.sonarlint.eclipse.ui.internal.command.AnalyzeCommand"
           name="Analyze"
+          categoryId="org.sonarlint.eclipse.ui.command.category">
+    </command>
+    <command
+          description="Exclude from analysis"
+          id="org.sonarlint.eclipse.ui.internal.command.ExcludeCommand"
+          name="Exclude"
           categoryId="org.sonarlint.eclipse.ui.command.category">
     </command>
     <command
@@ -616,8 +693,43 @@
           commandId="org.sonarlint.eclipse.ui.internal.command.ShowIssueLocationsCommand">
     </handler>
     <handler
+          class="org.sonarlint.eclipse.ui.internal.command.DeactivateRuleCommand"
+          commandId="org.sonarlint.eclipse.ui.internal.command.DeactivateRuleCommand">
+    </handler>
+    <handler
           class="org.sonarlint.eclipse.ui.internal.command.AnalyzeCommand"
           commandId="org.sonarlint.eclipse.ui.internal.command.AnalyzeCommand">
+          <enabledWhen>
+		        <with variable="activeMenuSelection">
+		          <iterate ifEmpty="false" operator="or">
+		            <or>
+	                 <adapt type="org.sonarlint.eclipse.core.resource.ISonarLintFile">
+		                 <not>
+		                   <test property="org.sonarlint.eclipse.core.excluded"/>
+		                 </not>
+	                 </adapt>
+	                 <not>
+	                 		<adapt type="org.sonarlint.eclipse.core.resource.ISonarLintFile"/>
+	                 </not>
+                 </or>
+	         </iterate>
+		       </with>
+         </enabledWhen>
+    </handler>
+    <handler
+          class="org.sonarlint.eclipse.ui.internal.command.ExcludeCommand"
+          commandId="org.sonarlint.eclipse.ui.internal.command.ExcludeCommand">
+          <enabledWhen>
+		        <with variable="activeMenuSelection">
+		          <iterate ifEmpty="false" operator="or">
+                 <adapt type="org.sonarlint.eclipse.core.resource.ISonarLintFile">
+	                 <not>
+	                   <test property="org.sonarlint.eclipse.core.excluded"/>
+	                 </not>
+                 </adapt>
+		         </iterate>
+		       </with>
+         </enabledWhen>
     </handler>
     <handler
           class="org.sonarlint.eclipse.ui.internal.command.BindProjectsCommand"

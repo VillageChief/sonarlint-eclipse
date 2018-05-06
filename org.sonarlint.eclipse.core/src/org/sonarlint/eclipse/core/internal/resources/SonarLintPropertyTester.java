@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +20,11 @@
 package org.sonarlint.eclipse.core.internal.resources;
 
 import javax.annotation.Nullable;
+
 import org.eclipse.core.expressions.PropertyTester;
-import org.sonarlint.eclipse.core.internal.adapter.Adapters;
 import org.eclipse.core.runtime.IAdaptable;
+import org.sonarlint.eclipse.core.internal.adapter.Adapters;
+import org.sonarlint.eclipse.core.internal.utils.FileExclusionsChecker;
 import org.sonarlint.eclipse.core.resource.ISonarLintFile;
 import org.sonarlint.eclipse.core.resource.ISonarLintProject;
 
@@ -50,7 +52,21 @@ public class SonarLintPropertyTester extends PropertyTester {
         ? project.isOpen()
         : (project.isOpen() == ((Boolean) expectedValue).booleanValue());
     }
+    if ("excluded".equals(property)) {
+      ISonarLintFile file = getFile(receiver);
+      if (file == null) {
+        return true;
+      }
+      return FileExclusionsChecker.isPathAlreadyExcludedInProject(file);
+    }
     return false;
+  }
+
+  private static ISonarLintFile getFile(Object receiver) {
+    if (receiver instanceof ISonarLintFile) {
+      return (ISonarLintFile) receiver;
+    }
+    return null;
   }
 
   private static ISonarLintProject getProject(Object receiver) {

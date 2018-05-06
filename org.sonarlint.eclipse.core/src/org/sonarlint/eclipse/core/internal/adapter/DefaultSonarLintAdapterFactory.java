@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -79,10 +79,15 @@ public class DefaultSonarLintAdapterFactory implements IAdapterFactory {
     return adapterType.cast(new DefaultSonarLintProjectAdapter(project));
   }
 
+  /**
+   * Change this method with caution since it is critical for some Cobol IDEs integration
+   */
   private <T> T getFileAdapter(Class<T> adapterType, IFile file) {
-    if (!SonarLintUtils.shouldAnalyze(file)) {
+    // First do some very cheap checks to see if we can exclude the physical file
+    if (!SonarLintUtils.isSonarLintFileCandidate(file)) {
       return null;
     }
+    // Not let's call the ISonarLintFileAdapterParticipant#exclude
     Predicate<IFile> shouldExclude = SonarLintCorePlugin.getExtensionTracker().getFileAdapterParticipants().stream()
       .<Predicate<IFile>>map(participant -> participant::exclude)
       .reduce(Predicate::or)
@@ -90,14 +95,20 @@ public class DefaultSonarLintAdapterFactory implements IAdapterFactory {
     if (shouldExclude.test(file)) {
       return null;
     }
+    // Try to find one ISonarLintFileAdapterParticipant that will adapt the IFile
     for (ISonarLintFileAdapterParticipant p : SonarLintCorePlugin.getExtensionTracker().getFileAdapterParticipants()) {
       ISonarLintFile adapted = p.adapt(file);
       if (adapted != null) {
         return adapterType.cast(adapted);
       }
     }
+    // Fallback to our default behavior
     ISonarLintProject project = file.getProject().getAdapter(ISonarLintProject.class);
-    return project != null ? adapterType.cast(new DefaultSonarLintFileAdapter(project, file)) : null;
+    if (project == null) {
+      // IProject was likely excluded by a ISonarLintProjectAdapterParticipant, so don't try to adapt the file
+      return null;
+    }
+    return adapterType.cast(new DefaultSonarLintFileAdapter(project, file));
   }
 
   @Override

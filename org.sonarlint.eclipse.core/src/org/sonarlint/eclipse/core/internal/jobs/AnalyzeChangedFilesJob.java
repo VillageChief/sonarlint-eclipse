@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@ import org.sonarlint.eclipse.core.internal.SonarLintCorePlugin;
 import org.sonarlint.eclipse.core.internal.TriggerType;
 import org.sonarlint.eclipse.core.internal.jobs.AnalyzeProjectRequest.FileWithDocument;
 import org.sonarlint.eclipse.core.internal.resources.DefaultSonarLintProjectAdapter;
-import org.sonarlint.eclipse.core.internal.resources.ProjectsProviderUtils;
 import org.sonarlint.eclipse.core.resource.ISonarLintFile;
 import org.sonarlint.eclipse.core.resource.ISonarLintProject;
 
@@ -54,9 +53,7 @@ public class AnalyzeChangedFilesJob extends WorkspaceJob {
     SubMonitor global = SubMonitor.convert(monitor, 100);
     try {
       global.setTaskName("Collect changed file(s) list");
-      ProjectsProviderUtils.allProjects().stream()
-        .filter(ISonarLintProject::isOpen)
-        .forEach(p -> p.deleteAllMarkers(SonarLintCorePlugin.MARKER_REPORT_ID));
+      SonarLintMarkerUpdater.deleteAllMarkersFromReport();
       Collection<ISonarLintFile> collectChangedFiles = collectChangedFiles(projects, global.newChild(20));
 
       if (collectChangedFiles.isEmpty()) {
@@ -81,7 +78,7 @@ public class AnalyzeChangedFilesJob extends WorkspaceJob {
           analysisMonitor.worked(1);
           continue;
         }
-        global.setTaskName("Analysing project " + project.getName());
+        global.setTaskName("Analyzing project " + project.getName());
         Collection<FileWithDocument> filesToAnalyze = entry.getValue().stream()
           .map(f -> new FileWithDocument(f, null))
           .collect(Collectors.toList());

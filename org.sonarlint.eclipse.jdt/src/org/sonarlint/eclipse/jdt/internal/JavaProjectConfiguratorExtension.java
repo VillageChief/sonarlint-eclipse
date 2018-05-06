@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ import org.sonarlint.eclipse.core.resource.ISonarLintProject;
 public class JavaProjectConfiguratorExtension implements IAnalysisConfigurator, ISonarLintFileAdapterParticipant {
 
   private final JdtUtils javaProjectConfigurator;
-  private boolean jdtPresent;
+  private final boolean jdtPresent;
 
   public JavaProjectConfiguratorExtension() {
     jdtPresent = isJdtPresent();

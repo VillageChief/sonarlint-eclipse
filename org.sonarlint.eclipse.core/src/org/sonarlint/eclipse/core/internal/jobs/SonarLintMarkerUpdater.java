@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
@@ -39,14 +41,16 @@ import org.eclipse.jface.text.DefaultPositionUpdater;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.Position;
 import org.sonarlint.eclipse.core.SonarLintLogger;
-import org.sonarlint.eclipse.core.internal.PreferencesUtils;
 import org.sonarlint.eclipse.core.internal.SonarLintCorePlugin;
 import org.sonarlint.eclipse.core.internal.TriggerType;
 import org.sonarlint.eclipse.core.internal.markers.MarkerUtils;
 import org.sonarlint.eclipse.core.internal.markers.MarkerUtils.ExtraPosition;
+import org.sonarlint.eclipse.core.internal.resources.ProjectsProviderUtils;
 import org.sonarlint.eclipse.core.internal.tracking.Trackable;
+import org.sonarlint.eclipse.core.internal.utils.PreferencesUtils;
 import org.sonarlint.eclipse.core.resource.ISonarLintFile;
 import org.sonarlint.eclipse.core.resource.ISonarLintIssuable;
+import org.sonarlint.eclipse.core.resource.ISonarLintProject;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.Issue.Flow;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.IssueLocation;
 
@@ -80,6 +84,12 @@ public class SonarLintMarkerUpdater {
     }
   }
 
+  public static Set<IResource> getResourcesWithMarkers(ISonarLintProject project) throws CoreException {
+    return Arrays.stream(project.getResource().findMarkers(SonarLintCorePlugin.MARKER_ON_THE_FLY_ID, false, IResource.DEPTH_INFINITE))
+      .map(IMarker::getResource)
+      .collect(Collectors.toSet());
+  }
+
   private static void resetExtraPositions(IDocument document) {
     try {
       document.removePositionCategory(MarkerUtils.SONARLINT_EXTRA_POSITIONS_CATEGORY);
@@ -88,6 +98,15 @@ public class SonarLintMarkerUpdater {
     }
     document.addPositionCategory(MarkerUtils.SONARLINT_EXTRA_POSITIONS_CATEGORY);
     document.addPositionUpdater(EXTRA_POSITIONS_UPDATER);
+  }
+
+  public static void clearMarkers(ISonarLintFile file) {
+    resetExtraPositions(file.getDocument());
+    try {
+      file.getResource().deleteMarkers(SonarLintCorePlugin.MARKER_ON_THE_FLY_ID, false, IResource.DEPTH_ZERO);
+    } catch (CoreException e) {
+      SonarLintLogger.get().error(e.getMessage(), e);
+    }
   }
 
   public static void updateMarkersWithServerSideData(ISonarLintIssuable issuable, IDocument document, Collection<Trackable> issues, TriggerType triggerType,
@@ -258,4 +277,9 @@ public class SonarLintMarkerUpdater {
     }
   }
 
+  public static void deleteAllMarkersFromReport() {
+    ProjectsProviderUtils.allProjects().stream()
+      .filter(ISonarLintProject::isOpen)
+      .forEach(p -> p.deleteAllMarkers(SonarLintCorePlugin.MARKER_REPORT_ID));
+  }
 }

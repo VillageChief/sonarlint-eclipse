@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ public class SonarLintUtils {
     // utility class, forbidden constructor
   }
 
-  public static boolean shouldAnalyze(IResource resource) {
+  public static boolean isSonarLintFileCandidate(IResource resource) {
     if (!resource.exists() || resource.isDerived(IResource.CHECK_ANCESTORS) || resource.isHidden(IResource.CHECK_ANCESTORS)) {
       return false;
     }
@@ -43,5 +43,4 @@ public class SonarLintUtils {
   public static String getPluginVersion() {
     return SonarLintCorePlugin.getInstance().getBundle().getVersion().toString();
   }
-
 }

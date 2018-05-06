@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@ public enum TriggerType {
   MANUAL("Manual trigger", ServerIssueUpdateStrategy.PER_PROJECT_OR_PER_FILE_SYNC),
   MANUAL_CHANGESET("Manual trigger changeset", ServerIssueUpdateStrategy.PER_PROJECT_OR_PER_FILE_SYNC),
   EDITOR_CHANGE("Editor change", ServerIssueUpdateStrategy.NO_UPDATE),
-  BINDING_CHANGE("Binding change", ServerIssueUpdateStrategy.PER_FILE_ASYNC);
+  BINDING_CHANGE("Binding change", ServerIssueUpdateStrategy.PER_FILE_ASYNC),
+  EXCLUSION_CHANGE("Exclusion change", ServerIssueUpdateStrategy.NO_UPDATE);
 
   /**
    * Magic number to decide if issues should be fetched per file or once for the entire project

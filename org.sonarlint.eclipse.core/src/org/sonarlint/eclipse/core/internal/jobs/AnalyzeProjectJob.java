@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +19,8 @@
  */
 package org.sonarlint.eclipse.core.internal.jobs;
 
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -55,7 +52,6 @@ import org.sonarlint.eclipse.core.analysis.IFileLanguageProvider;
 import org.sonarlint.eclipse.core.analysis.IPostAnalysisContext;
 import org.sonarlint.eclipse.core.configurator.ProjectConfigurationRequest;
 import org.sonarlint.eclipse.core.configurator.ProjectConfigurator;
-import org.sonarlint.eclipse.core.internal.PreferencesUtils;
 import org.sonarlint.eclipse.core.internal.SonarLintCorePlugin;
 import org.sonarlint.eclipse.core.internal.TriggerType;
 import org.sonarlint.eclipse.core.internal.markers.MarkerUtils;
@@ -63,14 +59,17 @@ import org.sonarlint.eclipse.core.internal.markers.TextRange;
 import org.sonarlint.eclipse.core.internal.resources.SonarLintProperty;
 import org.sonarlint.eclipse.core.internal.server.IServer;
 import org.sonarlint.eclipse.core.internal.server.Server;
+import org.sonarlint.eclipse.core.internal.telemetry.SonarLintTelemetry;
 import org.sonarlint.eclipse.core.internal.tracking.IssueTracker;
 import org.sonarlint.eclipse.core.internal.tracking.RawIssueTrackable;
 import org.sonarlint.eclipse.core.internal.tracking.ServerIssueTrackable;
 import org.sonarlint.eclipse.core.internal.tracking.ServerIssueUpdater;
 import org.sonarlint.eclipse.core.internal.tracking.Trackable;
+import org.sonarlint.eclipse.core.internal.utils.PreferencesUtils;
 import org.sonarlint.eclipse.core.resource.ISonarLintFile;
 import org.sonarlint.eclipse.core.resource.ISonarLintIssuable;
 import org.sonarlint.eclipse.core.resource.ISonarLintProject;
+import org.sonarsource.sonarlint.core.client.api.common.RuleKey;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.AnalysisResults;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.ClientInputFile;
 import org.sonarsource.sonarlint.core.client.api.common.analysis.Issue;
@@ -82,26 +81,35 @@ import org.sonarsource.sonarlint.core.client.api.exceptions.CanceledException;
 import org.sonarsource.sonarlint.core.client.api.standalone.StandaloneAnalysisConfiguration;
 import org.sonarsource.sonarlint.core.client.api.util.FileUtils;
 
+import static java.text.MessageFormat.format;
 import static org.sonarlint.eclipse.core.internal.utils.StringUtils.trimToNull;
 
 public class AnalyzeProjectJob extends AbstractSonarProjectJob {
   private final List<SonarLintProperty> extraProps;
-  private final AnalyzeProjectRequest request;
+  private final Map<ISonarLintFile, IDocument> filesToAnalyze;
+  private final Collection<ISonarLintFile> excludedFiles;
+  private final Collection<RuleKey> excludedRules;
+  private final TriggerType triggerType;
+  private final boolean shouldClearReport;
 
   public AnalyzeProjectJob(AnalyzeProjectRequest request) {
     super(jobTitle(request), request.getProject());
-    this.request = request;
     this.extraProps = PreferencesUtils.getExtraPropertiesForLocalAnalysis(request.getProject());
+    this.filesToAnalyze = request.getFilesToAnalyze()
+      .stream()
+      .collect(HashMap::new, (m, fWithDoc) -> m.put(fWithDoc.getFile(), fWithDoc.getDocument()), HashMap::putAll);
+    this.excludedFiles = request.getExcludedFiles();
+    this.excludedRules = PreferencesUtils.getExcludedRules();
+    this.triggerType = request.getTriggerType();
+    this.shouldClearReport = request.shouldClearReport();
   }
 
   private static String jobTitle(AnalyzeProjectRequest request) {
-    if (request.getFiles() == null) {
-      return "SonarLint analysis of project " + request.getProject().getName();
+    if (request.getFilesToAnalyze().size() == 1) {
+      return "SonarLint analysis of file " + request.getFilesToAnalyze().iterator().next().getFile().getName();
     }
-    if (request.getFiles().size() == 1) {
-      return "SonarLint analysis of file " + request.getFiles().iterator().next().getFile().getName();
-    }
-    return "SonarLint analysis of project " + request.getProject().getName() + " (" + request.getFiles().size() + " files)";
+    return format("SonarLint analysis of project {0} ({1} files to analyze, {2} excluded)", request.getProject().getName(), request.getFilesToAnalyze().size(),
+      request.getExcludedFiles().size());
   }
 
   @Override
@@ -110,24 +118,31 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
       return Status.CANCEL_STATUS;
     }
     long startTime = System.currentTimeMillis();
-    SonarLintLogger.get().debug("Trigger: " + request.getTriggerType().name());
-    SonarLintLogger.get().info(this.getName() + "...");
+    SonarLintLogger.get().debug("Trigger: " + triggerType.name());
+    SonarLintLogger.get().debug("Clear markers on " + excludedFiles.size() + " excluded files");
+    excludedFiles.forEach(SonarLintMarkerUpdater::clearMarkers);
+
+    if (shouldClearReport) {
+      SonarLintMarkerUpdater.deleteAllMarkersFromReport();
+    }
+
+    if (filesToAnalyze.isEmpty()) {
+      return Status.OK_STATUS;
+    }
+
     // Analyze
+    SonarLintLogger.get().info(this.getName() + "...");
     Path analysisWorkDir = null;
     try {
       // Configure
       Map<String, String> mergedExtraProps = new LinkedHashMap<>();
-      final Map<ISonarLintFile, IDocument> filesToAnalyze = request.getFiles().stream().collect(HashMap::new, (m, fWithDoc) -> m.put(fWithDoc.getFile(), fWithDoc.getDocument()),
-        HashMap::putAll);
       Collection<ProjectConfigurator> usedDeprecatedConfigurators = configureDeprecated(getProject(), filesToAnalyze.keySet(), mergedExtraProps, monitor);
 
       analysisWorkDir = Files.createTempDirectory(getProject().getWorkingDir(), "sonarlint");
       List<ClientInputFile> inputFiles = buildInputFiles(analysisWorkDir, filesToAnalyze);
       Collection<IAnalysisConfigurator> usedConfigurators = configure(getProject(), inputFiles, mergedExtraProps, analysisWorkDir, monitor);
 
-      for (SonarLintProperty sonarProperty : extraProps) {
-        mergedExtraProps.put(sonarProperty.getName(), sonarProperty.getValue());
-      }
+      extraProps.forEach(sonarProperty -> mergedExtraProps.put(sonarProperty.getName(), sonarProperty.getValue()));
 
 
       if (!inputFiles.isEmpty()) {
@@ -147,7 +162,7 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
 	    mergedExtraProps.put("sonar.password", SonarLintCorePlugin.getServersManager().getPassword(server));
         }
 
-        runAnalysisAndUpdateMarkers(server, filesToAnalyze, monitor, mergedExtraProps, inputFiles, analysisWorkDir);
+        runAnalysisAndUpdateMarkers(server, filesToAnalyze, monitor, mergedExtraProps, inputFiles, analysisWorkDir, excludedRules);
       }
 
       analysisCompleted(usedDeprecatedConfigurators, usedConfigurators, mergedExtraProps, monitor);
@@ -160,7 +175,11 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
       return new Status(Status.WARNING, SonarLintCorePlugin.PLUGIN_ID, "Error when executing SonarLint analysis", e);
     } finally {
       if (analysisWorkDir != null) {
-        FileUtils.deleteRecursively(analysisWorkDir);
+        try {
+          FileUtils.deleteRecursively(analysisWorkDir);
+        } catch (Exception e) {
+          SonarLintLogger.get().debug("Unable to delete temp directory: " + analysisWorkDir, e);
+        }
       }
     }
 
@@ -168,8 +187,7 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
   }
 
   private void runAnalysisAndUpdateMarkers(@Nullable Server server, Map<ISonarLintFile, IDocument> docPerFiles, final IProgressMonitor monitor,
-    Map<String, String> mergedExtraProps,
-    List<ClientInputFile> inputFiles, Path analysisWorkDir) throws CoreException {
+    Map<String, String> mergedExtraProps, List<ClientInputFile> inputFiles, Path analysisWorkDir, Collection<RuleKey> excludedRules) throws CoreException {
     StandaloneAnalysisConfiguration config;
     IPath projectLocation = getProject().getResource().getLocation();
     // In some unfrequent cases the project may be virtual and don't have physical location
@@ -180,28 +198,43 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
       config = new ConnectedAnalysisConfiguration(trimToNull(getProjectConfig().getModuleKey()), projectBaseDir, getProject().getWorkingDir(), inputFiles, mergedExtraProps);
     } else {
       SonarLintLogger.get().debug("Standalone mode (project not bound)");
-      config = new StandaloneAnalysisConfiguration(projectBaseDir, getProject().getWorkingDir(), inputFiles, mergedExtraProps);
+      config = new StandaloneAnalysisConfiguration(projectBaseDir, getProject().getWorkingDir(), inputFiles, mergedExtraProps, excludedRules);
     }
 
     Map<ISonarLintIssuable, List<Issue>> issuesPerResource = new LinkedHashMap<>();
-    request.getFiles().forEach(fileWithDoc -> issuesPerResource.put(fileWithDoc.getFile(), new ArrayList<>()));
+    filesToAnalyze.keySet().forEach(slFile -> issuesPerResource.put(slFile, new ArrayList<>()));
 
+    long start = System.currentTimeMillis();
     AnalysisResults result = run(server, config, issuesPerResource, monitor);
     if (!monitor.isCanceled() && result != null) {
-      updateMarkers(server, docPerFiles, issuesPerResource, result, request.getTriggerType(), monitor);
+      updateMarkers(server, docPerFiles, issuesPerResource, result, triggerType, monitor);
+      updateTelemetry(inputFiles, start);
     }
+  }
+
+  private static void updateTelemetry(List<ClientInputFile> inputFiles, long start) {
+    SonarLintTelemetry telemetry = SonarLintCorePlugin.getTelemetry();
+    if (inputFiles.size() == 1) {
+      telemetry.analysisDoneOnSingleFile(getExtension(inputFiles.iterator().next()), (int) (System.currentTimeMillis() - start));
+    } else {
+      telemetry.analysisDoneOnMultipleFiles();
+    }
+  }
+
+  private static String getExtension(ClientInputFile next) {
+    String path = next.getPath();
+    int lastDot = path.lastIndexOf('.');
+    return lastDot >= 0 ? path.substring(lastDot + 1) : "";
   }
 
   private static List<ClientInputFile> buildInputFiles(Path tempDirectory, final Map<ISonarLintFile, IDocument> filesToAnalyze) {
     List<ClientInputFile> inputFiles = new ArrayList<>(filesToAnalyze.size());
-    String allTestPattern = PreferencesUtils.getTestFileRegexps();
-    String[] testPatterns = allTestPattern.split(",");
-    final List<PathMatcher> pathMatchersForTests = createMatchersForTests(testPatterns);
 
     for (final Map.Entry<ISonarLintFile, IDocument> fileWithDoc : filesToAnalyze.entrySet()) {
       ISonarLintFile file = fileWithDoc.getKey();
       String language = tryDetectLanguage(file);
-      ClientInputFile inputFile = new EclipseInputFile(pathMatchersForTests, file, tempDirectory, fileWithDoc.getValue(), language);
+      boolean isTest = TestFileClassifier.get().isTest(file);
+      ClientInputFile inputFile = new EclipseInputFile(isTest, file, tempDirectory, fileWithDoc.getValue(), language);
       inputFiles.add(inputFile);
     }
     return inputFiles;
@@ -221,15 +254,6 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
       }
     }
     return language;
-  }
-
-  private static List<PathMatcher> createMatchersForTests(String[] testPatterns) {
-    final List<PathMatcher> pathMatchersForTests = new ArrayList<>();
-    FileSystem fs = FileSystems.getDefault();
-    for (String testPattern : testPatterns) {
-      pathMatchersForTests.add(fs.getPathMatcher("glob:" + testPattern));
-    }
-    return pathMatchersForTests;
   }
 
   private static Collection<ProjectConfigurator> configureDeprecated(final ISonarLintProject project, Collection<ISonarLintFile> filesToAnalyze,

@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -60,9 +60,9 @@ public class ProjectBindModel extends AbstractModelObject {
   public String getDisplayName() {
     if (StringUtils.isBlank(moduleKey)) {
       if (autoBindFailed) {
-        return "<Auto-bind failed. Type here to start searching for a remote CodeScan project...>";
+        return "<Auto-bind failed. Type here to start searching for a remote project...>";
       }
-      return "<Type here to start searching for a remote CodeScan project...>";
+      return "< Type here to start searching for a remote project or enter the exact project key...>";
     } else if (server == null) {
       return "<Bound to an unknown server: '" + this.serverId + "'>";
     } else {

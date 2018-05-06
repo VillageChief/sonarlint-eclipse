@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse ITs
- * Copyright (C) 2009-2017 SonarSource SA
+ * Copyright (C) 2009-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,19 @@ public class JavaPackageExplorerBot {
     clickContextMenu("Properties");
   }
 
+  public void excludeFile(String... nodes) {
+    viewBot.bot().tree().expandNode(nodes).contextMenu("SonarLint").menu("Exclude").click();
+  }
+
   public void triggerManualAnalysis(String... nodes) {
     viewBot.bot().tree().expandNode(nodes).contextMenu("SonarLint").menu("Analyze").click();
+  }
+
+  public boolean isManualAnalysisEnabled(String... nodes) {
+    return viewBot.bot().tree().expandNode(nodes).contextMenu("SonarLint").menu("Analyze").isEnabled();
+  }
+
+  public boolean isExcludeEnabled(String... nodes) {
+    return viewBot.bot().tree().expandNode(nodes).contextMenu("SonarLint").menu("Exclude").isEnabled();
   }
 }

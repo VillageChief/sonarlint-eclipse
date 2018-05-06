@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse ITs
- * Copyright (C) 2009-2017 SonarSource SA
+ * Copyright (C) 2009-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.sonar.wsclient.user.UserParameters;
 import org.sonarlint.eclipse.its.bots.ServerConnectionWizardBot;
-import org.sonarlint.eclipse.its.utils.JobHelpers;
 import org.sonarqube.ws.WsUserTokens.GenerateWsResponse;
 import org.sonarqube.ws.client.WsClient;
 import org.sonarqube.ws.client.organization.CreateWsRequest;
@@ -55,6 +54,7 @@ public class ConnectedModeWithOrgaTest extends AbstractSonarLintTest {
   public static Orchestrator orchestrator = Orchestrator.builderEnv()
     // Need at least one plugin to avoid bug SONAR-8918
     .setOrchestratorProperty("javaVersion", "LATEST_RELEASE")
+    .setServerProperty("sonar.sonarcloud.enabled", "true")
     .addPlugin("java")
     .build();
 

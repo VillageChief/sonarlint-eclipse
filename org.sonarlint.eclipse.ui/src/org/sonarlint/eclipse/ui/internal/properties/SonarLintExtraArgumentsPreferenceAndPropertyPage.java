@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,10 +20,8 @@
 package org.sonarlint.eclipse.ui.internal.properties;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import javax.annotation.CheckForNull;
-import org.sonarlint.eclipse.core.internal.adapter.Adapters;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.layout.TableColumnLayout;
 import org.eclipse.jface.resource.JFaceResources;
@@ -52,12 +50,10 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.dialogs.PreferencesUtil;
-import org.eclipse.ui.dialogs.PropertyPage;
-import org.sonarlint.eclipse.core.SonarLintLogger;
-import org.sonarlint.eclipse.core.internal.PreferencesUtils;
+import org.sonarlint.eclipse.core.internal.adapter.Adapters;
 import org.sonarlint.eclipse.core.internal.resources.SonarLintProjectConfiguration;
 import org.sonarlint.eclipse.core.internal.resources.SonarLintProperty;
-import org.sonarlint.eclipse.core.internal.utils.StringUtils;
+import org.sonarlint.eclipse.core.internal.utils.PreferencesUtils;
 import org.sonarlint.eclipse.core.resource.ISonarLintProject;
 import org.sonarlint.eclipse.ui.internal.Messages;
 import org.sonarlint.eclipse.ui.internal.SonarLintUiPlugin;
@@ -73,7 +69,7 @@ import org.sonarlint.eclipse.ui.internal.SonarLintUiPlugin;
  * framework methods.
  * </p>
  */
-public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends PropertyPage implements IWorkbenchPreferencePage {
+public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends AbstractListPropertyPage implements IWorkbenchPreferencePage {
 
   private static final String VALUE = "Value";
 
@@ -131,16 +127,6 @@ public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends PropertyPa
   }
 
   private List<SonarLintProperty> sonarProperties;
-
-  /**
-   * The Remove button.
-   */
-  private Button removeButton;
-
-  /**
-   * The Edit button.
-   */
-  private Button editButton;
 
   /**
    * The Up button.
@@ -232,29 +218,9 @@ public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends PropertyPa
     return parent;
   }
 
-  private void createButtons(Composite innerParent) {
-    GridLayout layout;
-    Composite buttons = new Composite(innerParent, SWT.NONE);
-    buttons.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
-    layout = new GridLayout();
-    layout.marginHeight = 0;
-    layout.marginWidth = 0;
-    buttons.setLayout(layout);
-
-    Button addButton = new Button(buttons, SWT.PUSH);
-    addButton.setText("New...");
-    addButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-    addButton.addListener(SWT.Selection, e -> add());
-
-    editButton = new Button(buttons, SWT.PUSH);
-    editButton.setText("Edit...");
-    editButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-    editButton.addListener(SWT.Selection, e -> edit());
-
-    removeButton = new Button(buttons, SWT.PUSH);
-    removeButton.setText("Remove");
-    removeButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-    removeButton.addListener(SWT.Selection, e -> remove());
+  @Override
+  protected Composite createButtons(Composite innerParent) {
+    Composite buttons = super.createButtons(innerParent);
 
     upButton = new Button(buttons, SWT.PUSH);
     upButton.setText("Up");
@@ -265,6 +231,7 @@ public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends PropertyPa
     downButton.setText("Down");
     downButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
     downButton.addListener(SWT.Selection, e -> downPressed());
+    return buttons;
   }
 
   private static void createLinkToGlobal(final Composite ancestor, Composite parent) {
@@ -280,7 +247,13 @@ public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends PropertyPa
     fLink.addSelectionListener(sl);
   }
 
-  private void edit() {
+  @Override
+  protected TableViewer getTableViewer() {
+    return fTableViewer;
+  }
+
+  @Override
+  protected void edit() {
     IStructuredSelection selection = (IStructuredSelection) fTableViewer.getSelection();
 
     Object[] objects = selection.toArray();
@@ -292,7 +265,8 @@ public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends PropertyPa
     edit(data);
   }
 
-  private void add() {
+  @Override
+  protected void add() {
     SonarLintProperty newProperty = editSonarProperty(new SonarLintProperty("", ""), false, true);
     if (newProperty != null) {
       sonarProperties.add(newProperty);
@@ -301,19 +275,18 @@ public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends PropertyPa
     }
   }
 
-  private void remove() {
-    IStructuredSelection selection = (IStructuredSelection) fTableViewer.getSelection();
-
-    Iterator elements = selection.iterator();
-    while (elements.hasNext()) {
-      SonarLintProperty data = (SonarLintProperty) elements.next();
-      sonarProperties.remove(data);
-    }
-
-    fTableViewer.refresh();
+  @Override
+  protected void remove(Object item) {
+    sonarProperties.remove(item);
   }
 
-  private void edit(SonarLintProperty data) {
+  @Override
+  protected void removeSelection() {
+    super.removeSelection();
+    updateButtons();
+  }
+
+  protected void edit(SonarLintProperty data) {
     SonarLintProperty oldProp = data;
     SonarLintProperty newProp = editSonarProperty(new SonarLintProperty(oldProp), true, false);
     if (newProp != null) {
@@ -416,15 +389,7 @@ public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends PropertyPa
     sonarProperties = new ArrayList<>();
     if (isGlobal()) {
       String props = getPreferenceStore().getString(PreferencesUtils.PREF_EXTRA_ARGS);
-      try {
-        String[] keyValuePairs = StringUtils.split(props, "\r\n");
-        for (String keyValuePair : keyValuePairs) {
-          String[] keyValue = StringUtils.split(keyValuePair, "=");
-          sonarProperties.add(new SonarLintProperty(keyValue[0], keyValue[1]));
-        }
-      } catch (Exception e) {
-        SonarLintLogger.get().error("Error while loading SonarLint analyzer properties" + props, e);
-      }
+      sonarProperties.addAll(PreferencesUtils.deserializeExtraProperties(props));
     } else {
       SonarLintProjectConfiguration sonarProject = getProjectConfig();
       if (sonarProject != null) {
@@ -435,12 +400,8 @@ public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends PropertyPa
 
   @Override
   public boolean performOk() {
-    List<String> keyValuePairs = new ArrayList<>(sonarProperties.size());
-    for (SonarLintProperty prop : sonarProperties) {
-      keyValuePairs.add(prop.getName() + "=" + prop.getValue());
-    }
-    String props = StringUtils.joinSkipNull(keyValuePairs, "\r\n");
     if (isGlobal()) {
+      String props = PreferencesUtils.serializeExtraProperties(sonarProperties);
       getPreferenceStore().setValue(PreferencesUtils.PREF_EXTRA_ARGS, props);
     } else {
       SonarLintProjectConfiguration sonarProject = getProjectConfig();
@@ -458,6 +419,7 @@ public class SonarLintExtraArgumentsPreferenceAndPropertyPage extends PropertyPa
     fTableViewer.refresh();
   }
 
+  @CheckForNull
   private ISonarLintProject getProject() {
     return Adapters.adapt(getElement(), ISonarLintProject.class);
   }

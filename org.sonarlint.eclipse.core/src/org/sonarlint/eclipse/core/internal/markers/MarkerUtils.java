@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,8 +35,9 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.Position;
 import org.sonarlint.eclipse.core.SonarLintLogger;
-import org.sonarlint.eclipse.core.internal.PreferencesUtils;
 import org.sonarlint.eclipse.core.internal.SonarLintCorePlugin;
+import org.sonarlint.eclipse.core.internal.utils.PreferencesUtils;
+import org.sonarsource.sonarlint.core.client.api.common.RuleKey;
 
 public final class MarkerUtils {
 
@@ -52,15 +53,6 @@ public final class MarkerUtils {
   public static final String SONARLINT_EXTRA_POSITIONS_CATEGORY = "sonarlintextralocations";
 
   private MarkerUtils() {
-  }
-
-  public static List<IMarker> findOnTheFlyIssuesMarkers(IResource resource) {
-    try {
-      return Arrays.asList(resource.findMarkers(SonarLintCorePlugin.MARKER_ON_THE_FLY_ID, true, IResource.DEPTH_INFINITE));
-    } catch (CoreException e) {
-      SonarLintLogger.get().error(e.getMessage(), e);
-      return Collections.emptyList();
-    }
   }
 
   public static List<IMarker> findReportIssuesMarkers(IResource resource) {
@@ -141,6 +133,15 @@ public final class MarkerUtils {
     int start = startLineStartOffset + startLineOffset;
     int end = endLineStartOffset + endLineOffset;
     return function.apply(start, end - start);
+  }
+
+  @CheckForNull
+  public static RuleKey getRuleKey(IMarker marker) {
+    String repositoryAndKey = marker.getAttribute(SONAR_MARKER_RULE_KEY_ATTR, null);
+    if (repositoryAndKey == null) {
+      return null;
+    }
+    return PreferencesUtils.deserializeRuleKey(repositoryAndKey);
   }
 
   public static class ExtraPosition extends Position {

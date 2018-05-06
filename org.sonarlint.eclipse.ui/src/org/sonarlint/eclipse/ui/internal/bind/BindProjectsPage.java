@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -81,6 +81,8 @@ import org.sonarlint.eclipse.ui.internal.server.actions.JobUtils;
 import org.sonarlint.eclipse.ui.internal.server.wizard.ServerConnectionWizard;
 import org.sonarsource.sonarlint.core.client.api.connected.RemoteModule;
 import org.sonarsource.sonarlint.core.client.api.util.TextSearchIndex;
+
+import static java.util.Arrays.asList;
 
 public class BindProjectsPage extends WizardPage {
 
@@ -170,7 +172,7 @@ public class BindProjectsPage extends WizardPage {
 
     ViewerSupport.bind(
       viewer,
-      new WritableList(list, ProjectBindModel.class),
+      new WritableList<ProjectBindModel>(list, ProjectBindModel.class),
       new IValueProperty[] {BeanProperties.value(ProjectBindModel.class, ProjectBindModel.PROPERTY_PROJECT_ECLIPSE_NAME),
         BeanProperties.value(ProjectBindModel.class, ProjectBindModel.PROPERTY_PROJECT_SONAR_FULLNAME)});
 
@@ -405,6 +407,7 @@ public class BindProjectsPage extends WizardPage {
   }
 
   private class ProjectAssociationModelEditingSupport extends EditingSupport {
+    private TextCellEditorWithContentProposal textCellEditor;
 
     public ProjectAssociationModelEditingSupport(TableViewer viewer) {
       super(viewer);
@@ -417,17 +420,23 @@ public class BindProjectsPage extends WizardPage {
 
     @Override
     protected CellEditor getCellEditor(Object element) {
-      return new TextCellEditorWithContentProposal(viewer.getTable(), new SearchEngineProvider(selectedServer, BindProjectsPage.this), (ProjectBindModel) element);
+      textCellEditor = new TextCellEditorWithContentProposal(viewer.getTable(), new SearchEngineProvider(selectedServer, BindProjectsPage.this), (ProjectBindModel) element);
+      return textCellEditor;
     }
 
     @Override
     protected Object getValue(Object element) {
-      return StringUtils.trimToEmpty(((ProjectBindModel) element).getDisplayName());
+      return StringUtils.trimToEmpty(((ProjectBindModel) element).getModuleKey());
     }
 
     @Override
     protected void setValue(Object element, Object value) {
-      // Don't set value as the model was already updated in the text adapter
+      boolean open = textCellEditor != null && textCellEditor.isContentProposalOpen();
+
+      if (!open && element instanceof ProjectBindModel) {
+        ProjectBindModel model = (ProjectBindModel) element;
+        model.associate(selectedServer.getId(), null, (String) value);
+      }
     }
 
   }
@@ -471,10 +480,13 @@ public class BindProjectsPage extends WizardPage {
     project.deleteAllMarkers(SonarLintCorePlugin.MARKER_ON_THE_FLY_ID);
     project.deleteAllMarkers(SonarLintCorePlugin.MARKER_REPORT_ID);
     SonarLintCorePlugin.clearIssueTracker(project);
-    JobUtils.scheduleAnalysisOfOpenFiles(project, TriggerType.BINDING_CHANGE);
     if (project.isBound()) {
-      new ProjectUpdateJob(project).schedule();
+      ProjectUpdateJob job = new ProjectUpdateJob(project);
+      JobUtils.scheduleAnalysisOfOpenFiles(job, asList(project), TriggerType.BINDING_CHANGE);
+      job.schedule();
       SonarLintUiPlugin.subscribeToNotifications(project);
+    } else {
+      JobUtils.scheduleAnalysisOfOpenFiles(project, TriggerType.BINDING_CHANGE);
     }
     JobUtils.notifyServerViewAfterBindingChange(project, oldServerId);
   }

@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@ import org.sonarlint.eclipse.core.SonarLintLogger;
 import org.sonarlint.eclipse.core.internal.SonarLintCorePlugin;
 import org.sonarlint.eclipse.core.internal.TriggerType;
 import org.sonarlint.eclipse.core.internal.jobs.AnalyzeProjectRequest.FileWithDocument;
-import org.sonarlint.eclipse.core.internal.resources.ProjectsProviderUtils;
 import org.sonarlint.eclipse.core.resource.ISonarLintProject;
 
 public class AnalyzeProjectsJob extends WorkspaceJob {
@@ -49,9 +48,7 @@ public class AnalyzeProjectsJob extends WorkspaceJob {
     SubMonitor global = SubMonitor.convert(monitor, 100);
     try {
       global.setTaskName("Analysis");
-      ProjectsProviderUtils.allProjects().stream()
-        .filter(ISonarLintProject::isOpen)
-        .forEach(p -> p.deleteAllMarkers(SonarLintCorePlugin.MARKER_REPORT_ID));
+      SonarLintMarkerUpdater.deleteAllMarkersFromReport();
       SubMonitor analysisMonitor = SubMonitor.convert(global.newChild(100), filesPerProject.size());
       for (Map.Entry<ISonarLintProject, Collection<FileWithDocument>> entry : filesPerProject.entrySet()) {
         if (monitor.isCanceled()) {
@@ -62,7 +59,7 @@ public class AnalyzeProjectsJob extends WorkspaceJob {
           analysisMonitor.worked(1);
           continue;
         }
-        global.setTaskName("Analysing project " + project.getName());
+        global.setTaskName("Analyzing project " + project.getName());
         AnalyzeProjectRequest req = new AnalyzeProjectRequest(project, entry.getValue(), TriggerType.MANUAL);
         AnalyzeProjectJob job = new AnalyzeProjectJob(req);
         SubMonitor subMonitor = analysisMonitor.newChild(1);

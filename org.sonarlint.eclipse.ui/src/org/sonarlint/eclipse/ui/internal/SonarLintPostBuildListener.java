@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@ package org.sonarlint.eclipse.ui.internal;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -49,6 +48,9 @@ import org.sonarlint.eclipse.ui.internal.markers.ShowIssueFlowsMarkerResolver;
 import org.sonarlint.eclipse.ui.internal.server.actions.JobUtils;
 import org.sonarlint.eclipse.ui.internal.util.PlatformUtils;
 
+/**
+ * Responsible to trigger analysis when files are changed
+ */
 public class SonarLintPostBuildListener implements IResourceChangeListener {
 
   @Override
@@ -62,8 +64,11 @@ public class SonarLintPostBuildListener implements IResourceChangeListener {
       }
 
       if (!changedFiles.isEmpty()) {
+        Map<ISonarLintProject, Collection<ISonarLintFile>> filesPerProject = changedFiles.stream()
+          .collect(Collectors.groupingBy(ISonarLintFile::getProject, Collectors.toCollection(ArrayList::new)));
+
         SonarLintUiPlugin.removeChangeListener();
-        Job job = new AnalyzeOpenedFiles(changedFiles.stream().collect(Collectors.groupingBy(ISonarLintFile::getProject, Collectors.toList())));
+        Job job = new AnalyzeOpenedFiles(filesPerProject);
         JobUtils.scheduleAfter(job, SonarLintUiPlugin::addChangeListener);
         job.schedule();
       }
@@ -72,17 +77,18 @@ public class SonarLintPostBuildListener implements IResourceChangeListener {
 
   private static class AnalyzeOpenedFiles extends Job {
 
-    private final Map<ISonarLintProject, List<ISonarLintFile>> changedFilesPerProject;
+    private final Map<ISonarLintProject, Collection<ISonarLintFile>> changedFilesPerProject;
 
-    AnalyzeOpenedFiles(Map<ISonarLintProject, List<ISonarLintFile>> changedFilesPerProject) {
+    AnalyzeOpenedFiles(Map<ISonarLintProject, Collection<ISonarLintFile>> changedFilesPerProject) {
       super("Find opened files");
       this.changedFilesPerProject = changedFilesPerProject;
     }
 
     @Override
     public IStatus run(IProgressMonitor monitor) {
-      for (Map.Entry<ISonarLintProject, List<ISonarLintFile>> entry : changedFilesPerProject.entrySet()) {
+      for (Map.Entry<ISonarLintProject, Collection<ISonarLintFile>> entry : changedFilesPerProject.entrySet()) {
         ISonarLintProject project = entry.getKey();
+
         Collection<FileWithDocument> filesToAnalyze = entry.getValue().stream()
           .map(f -> {
             IEditorPart editorPart = PlatformUtils.findEditor(f);
@@ -110,24 +116,31 @@ public class SonarLintPostBuildListener implements IResourceChangeListener {
   }
 
   private static boolean visitDelta(final Collection<ISonarLintFile> changedFiles, IResourceDelta delta) {
-    if (!SonarLintUtils.shouldAnalyze(delta.getResource())) {
+    if (!SonarLintUtils.isSonarLintFileCandidate(delta.getResource())) {
       return false;
     }
+
+    ISonarLintProject resourceSonarLintProject = Adapters.adapt(delta.getResource().getProject(), ISonarLintProject.class);
+    if (resourceSonarLintProject != null && !SonarLintUtils.isSonarLintFileCandidate(delta.getResource())) {
+      return false;
+    }
+
     ISonarLintProject sonarLintProject = Adapters.adapt(delta.getResource(), ISonarLintProject.class);
     if (sonarLintProject != null) {
       return sonarLintProject.isAutoEnabled();
     }
+
     ISonarLintFile sonarLintFile = Adapters.adapt(delta.getResource(), ISonarLintFile.class);
     if (sonarLintFile != null && sonarLintFile.getProject().isAutoEnabled() && isChanged(delta)) {
       changedFiles.add(sonarLintFile);
       return true;
     }
+
     return true;
   }
 
   private static boolean isChanged(IResourceDelta delta) {
-    return delta.getKind() == IResourceDelta.CHANGED
-      && (delta.getFlags() & IResourceDelta.CONTENT) != 0;
+    return delta.getKind() == IResourceDelta.CHANGED && (delta.getFlags() & IResourceDelta.CONTENT) != 0;
   }
 
 }

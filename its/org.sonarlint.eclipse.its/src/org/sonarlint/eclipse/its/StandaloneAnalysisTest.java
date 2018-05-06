@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse ITs
- * Copyright (C) 2009-2017 SonarSource SA
+ * Copyright (C) 2009-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.swtbot.eclipse.finder.widgets.SWTBotEclipseEditor;
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -58,6 +59,9 @@ public class StandaloneAnalysisTest extends AbstractSonarLintTest {
 
   @Test
   public void shouldAnalyseJava() throws Exception {
+    System.out.println("shouldAnalyseJava");
+    Assume.assumeFalse(platformVersion().toString().startsWith("4.4"));
+
     SwtBotUtils.openPerspective(bot, JavaUI.ID_PERSPECTIVE);
     IProject project = importEclipseProject("java/java-simple", "java-simple");
     JobHelpers.waitForJobsToComplete(bot);
@@ -108,7 +112,7 @@ public class StandaloneAnalysisTest extends AbstractSonarLintTest {
     new JavaPackageExplorerBot(bot)
       .triggerManualAnalysis("java-simple");
 
-    bot.shell("Confirmation").bot().button("Proceed").click();
+    bot.shell("Confirmation").bot().button("OK").click();
 
     JobHelpers.waitForJobsToComplete(bot);
 
@@ -120,6 +124,7 @@ public class StandaloneAnalysisTest extends AbstractSonarLintTest {
 
   @Test
   public void shouldAnalyseJavaJunit() throws Exception {
+    System.out.println("shouldAnalyseJavaJunit");
     assumeTrue(supportJunit());
     SwtBotUtils.openPerspective(bot, JavaUI.ID_PERSPECTIVE);
     IProject project = importEclipseProject("java/java-junit", "java-junit");
@@ -145,6 +150,8 @@ public class StandaloneAnalysisTest extends AbstractSonarLintTest {
 
   @Test
   public void shouldAnalyseJava8() throws Exception {
+    System.out.println("shouldAnalyseJava8");
+
     assumeTrue(supportJava8());
     SwtBotUtils.openPerspective(bot, JavaUI.ID_PERSPECTIVE);
     IProject project = importEclipseProject("java/java8", "java8");
@@ -165,6 +172,8 @@ public class StandaloneAnalysisTest extends AbstractSonarLintTest {
   // SONARIDE-353
   @Test
   public void shouldAnalyseJavaWithDependentProject() throws Exception {
+    System.out.println("shouldAnalyseJavaWithDependentProject");
+
     SwtBotUtils.openPerspective(bot, JavaUI.ID_PERSPECTIVE);
     importEclipseProject("java/java-dependent-projects/java-dependent-project", "java-dependent-project");
     IProject mainProject = importEclipseProject("java/java-dependent-projects/java-main-project", "java-main-project");
@@ -187,6 +196,8 @@ public class StandaloneAnalysisTest extends AbstractSonarLintTest {
 
   @Test
   public void shouldAnalysePython() throws Exception {
+    System.out.println("shouldAnalysePython");
+
     SwtBotUtils.openPerspective(bot, PythonPerspectiveFactory.PERSPECTIVE_ID);
     IProject project = importEclipseProject("python", "python");
 
@@ -213,6 +224,8 @@ public class StandaloneAnalysisTest extends AbstractSonarLintTest {
 
   @Test
   public void shouldAnalyseLinkedFile() throws Exception {
+    System.out.println("shouldAnalyseLinkedFile");
+
     SwtBotUtils.openPerspective(bot, JavaUI.ID_PERSPECTIVE);
     IProject project = importEclipseProject("java/java-linked", "java-linked");
     JobHelpers.waitForJobsToComplete(bot);
@@ -233,6 +246,8 @@ public class StandaloneAnalysisTest extends AbstractSonarLintTest {
 
   @Test
   public void shouldAnalyseVirtualProject() throws Exception {
+    System.out.println("shouldAnalyseVirtualProject");
+
     File remoteProjectDir = temp.newFolder();
     FileUtils.copyDirectory(new File("projects/java/java-simple"), remoteProjectDir);
 

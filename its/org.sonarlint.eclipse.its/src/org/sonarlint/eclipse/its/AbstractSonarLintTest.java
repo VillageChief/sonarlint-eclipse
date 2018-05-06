@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse ITs
- * Copyright (C) 2009-2017 SonarSource SA
+ * Copyright (C) 2009-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -221,6 +221,14 @@ public abstract class AbstractSonarLintTest {
 
   public static boolean isOxygenOrGreater() {
     return platformVersion().compareTo(new Version("4.7")) >= 0;
+  }
+
+  public static boolean isMarsOrGreater() {
+    return platformVersion().compareTo(new Version("4.5")) >= 0;
+  }
+
+  public static boolean isNeonOrGreater() {
+    return platformVersion().compareTo(new Version("4.6")) >= 0;
   }
 
   protected static Version platformVersion() {

@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,19 +19,23 @@
  */
 package org.sonarlint.eclipse.core.internal.jobs;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import org.eclipse.jface.text.IDocument;
 import org.sonarlint.eclipse.core.internal.TriggerType;
+import org.sonarlint.eclipse.core.internal.utils.FileExclusionsChecker;
 import org.sonarlint.eclipse.core.resource.ISonarLintFile;
 import org.sonarlint.eclipse.core.resource.ISonarLintProject;
 
 public class AnalyzeProjectRequest {
 
   private final ISonarLintProject project;
-  private final Collection<FileWithDocument> files;
+  private final Collection<FileWithDocument> filesToAnalyze = new ArrayList<>();
+  private final Collection<ISonarLintFile> excludedFiles = new ArrayList<>();
   private final TriggerType triggerType;
+  private final boolean shouldClearReport;
 
   public static class FileWithDocument {
     private final ISonarLintFile file;
@@ -53,22 +57,42 @@ public class AnalyzeProjectRequest {
 
   }
 
-  public AnalyzeProjectRequest(ISonarLintProject project, Collection<FileWithDocument> files, TriggerType triggerType) {
+  public AnalyzeProjectRequest(ISonarLintProject project, Collection<FileWithDocument> files, TriggerType triggerType, boolean shouldClearReport) {
     this.project = project;
-    this.files = files;
     this.triggerType = triggerType;
+    FileExclusionsChecker exclusionsChecker = new FileExclusionsChecker(project);
+    files.forEach(fWithDoc -> {
+      if (exclusionsChecker.isExcluded(fWithDoc.getFile(), true)) {
+        excludedFiles.add(fWithDoc.getFile());
+      } else {
+        filesToAnalyze.add(fWithDoc);
+      }
+    });
+    this.shouldClearReport = shouldClearReport;
+  }
+
+  public AnalyzeProjectRequest(ISonarLintProject project, Collection<FileWithDocument> files, TriggerType triggerType) {
+    this(project, files, triggerType, false);
   }
 
   public ISonarLintProject getProject() {
     return project;
   }
 
-  public Collection<FileWithDocument> getFiles() {
-    return files;
+  public Collection<FileWithDocument> getFilesToAnalyze() {
+    return filesToAnalyze;
+  }
+
+  public Collection<ISonarLintFile> getExcludedFiles() {
+    return excludedFiles;
   }
 
   public TriggerType getTriggerType() {
     return triggerType;
+  }
+
+  public boolean shouldClearReport() {
+    return shouldClearReport;
   }
 
 }

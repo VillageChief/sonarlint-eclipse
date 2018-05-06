@@ -1,6 +1,6 @@
 /*
  * SonarLint for Eclipse
- * Copyright (C) 2015-2017 SonarSource SA
+ * Copyright (C) 2015-2018 SonarSource SA
  * sonarlint@sonarsource.com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,31 +19,60 @@
  */
 package org.sonarlint.eclipse.ui.internal.markers;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.runtime.Adapters;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.ui.IMarkerResolution;
 import org.eclipse.ui.IMarkerResolutionGenerator2;
 import org.sonarlint.eclipse.core.internal.SonarLintCorePlugin;
 import org.sonarlint.eclipse.core.internal.markers.MarkerUtils;
+import org.sonarlint.eclipse.core.resource.ISonarLintFile;
 
 public class SonarLintMarkerResolutionGenerator implements IMarkerResolutionGenerator2 {
 
   @Override
   public boolean hasResolutions(final IMarker marker) {
+    return isSonarLintIssueMarker(marker);
+  }
+
+  @Override
+  public IMarkerResolution[] getResolutions(final IMarker marker) {
+    List<IMarkerResolution> resolutions = new ArrayList<>();
+    resolutions.add(new ShowRuleDescriptionMarkerResolver(marker));
+
+    if (hasExtraLocations(marker)) {
+      resolutions.add(new ShowIssueFlowsMarkerResolver(marker));
+    }
+
+    if (isStandaloneIssue(marker)) {
+      resolutions.add(new DeactivateRuleMarkerResolver(marker));
+    }
+
+    // note: the display order seems independent from the order in this array
+    return resolutions.toArray(new IMarkerResolution[resolutions.size()]);
+  }
+
+  private static boolean isSonarLintIssueMarker(IMarker marker) {
     try {
-      return SonarLintCorePlugin.MARKER_ON_THE_FLY_ID.equals(marker.getType()) && marker.getAttribute(MarkerUtils.SONAR_MARKER_HAS_EXTRA_LOCATION_KEY_ATTR, false);
+      return SonarLintCorePlugin.MARKER_ON_THE_FLY_ID.equals(marker.getType()) || SonarLintCorePlugin.MARKER_REPORT_ID.equals(marker.getType());
     } catch (final CoreException e) {
       return false;
     }
   }
 
-  @Override
-  public IMarkerResolution[] getResolutions(final IMarker marker) {
-    if (hasResolutions(marker)) {
-      return new IMarkerResolution[] {new ShowIssueFlowsMarkerResolver(marker), new ShowRuleDescriptionMarkerResolver(marker)};
-    } else {
-      return new IMarkerResolution[] {new ShowRuleDescriptionMarkerResolver(marker)};
+  private static boolean hasExtraLocations(IMarker marker) {
+    return marker.getAttribute(MarkerUtils.SONAR_MARKER_HAS_EXTRA_LOCATION_KEY_ATTR, false);
+  }
+
+  private static boolean isStandaloneIssue(IMarker marker) {
+    ISonarLintFile sonarLintFile = Adapters.adapt(marker.getResource(), ISonarLintFile.class);
+    if (sonarLintFile == null) {
+      return false;
     }
+
+    return !sonarLintFile.getProject().isBound();
   }
 
 }
