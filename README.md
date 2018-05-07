@@ -67,7 +67,7 @@ With Maven:
 Running ITs
 -----------
 
-To run ITs for the default target platform and SonarQube version you can use a helper script:
+To run ITs for the default target platform and CodeScan version you can use a helper script:
 
     ./scripts/run-its.sh --init  # start X server for windows opened by the tests
     ./scripts/run-its.sh

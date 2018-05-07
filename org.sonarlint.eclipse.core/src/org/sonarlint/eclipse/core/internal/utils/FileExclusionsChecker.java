@@ -68,7 +68,7 @@ public class FileExclusionsChecker {
     if (project.isBound()) {
       server = (Server) SonarLintCorePlugin.getServersManager().getServer(projectConfiguration.getServerId());
       if (server == null) {
-        SonarLintLogger.get().error("Project '" + project.getName() + "' is bound to an unknown SonarQube server: '" + projectConfiguration.getServerId()
+        SonarLintLogger.get().error("Project '" + project.getName() + "' is bound to an unknown CodeScan server: '" + projectConfiguration.getServerId()
           + "'. Please fix project binding or unbind project.");
         return Collections.emptyList();
       }
@@ -80,7 +80,7 @@ public class FileExclusionsChecker {
       serverFileExclusions.forEach(fileRelativePath -> {
         filePerRelativePath.remove(fileRelativePath);
         if (log) {
-          SonarLintLogger.get().debug("File excluded from analysis due to exclusions configured in SonarQube: " + fileRelativePath);
+          SonarLintLogger.get().debug("File excluded from analysis due to exclusions configured in CodeScan: " + fileRelativePath);
         }
       });
       return filePerRelativePath.values();
