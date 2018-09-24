@@ -180,7 +180,7 @@ public class ServerConnectionModel extends ModelObject {
   }
 
   public boolean hasOrganizations() {
-    return organizationsIndex != null && organizationsIndex.size() > 0;
+    return organizationsIndex != null && organizationsIndex.size() > 1;
   }
 
   public void setOrganizationsIndex(@Nullable TextSearchIndex<RemoteOrganization> organizationsIndex) {
